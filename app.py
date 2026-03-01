@@ -11,16 +11,16 @@ import hashlib
 
 st.set_page_config(page_title="AI Resume Screening & Job Recommendation", page_icon="🤖", layout="wide")
 
-st.markdown(\"\"\"
+st.markdown("""
 <style>
     .stApp {background: linear-gradient(135deg, #0e1117 0%, #1a1f2e 100%);}
-    div[data-testid=\"stMetric\"] {background: linear-gradient(135deg, #1a1f2e, #2d3561); border: 1px solid #667eea; border-radius: 12px; padding: 15px;}
+    div[data-testid="stMetric"] {background: linear-gradient(135deg, #1a1f2e, #2d3561); border: 1px solid #667eea; border-radius: 12px; padding: 15px;}
     .stButton>button {background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; padding: 10px 25px; font-weight: bold; width: 100%;}
     .title-card {background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 15px; text-align: center; margin-bottom: 30px;}
     h1, h2, h3 {color: #ffffff;}
     p {color: #a0aec0;}
 </style>
-\"\"\", unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
 def init_db():
     conn = sqlite3.connect("users.db")
@@ -134,12 +134,12 @@ def chat_with_ai(user_message):
     return response.choices[0].message.content
 
 def show_login():
-    st.markdown(\"\"\"
-    <div class=\"title-card\">
-        <h1 style=\"color:white;\">🤖 AI Resume Screening</h1>
-        <p style=\"color:#e0e0e0;\">&amp; Job Recommendation System</p>
+    st.markdown("""
+    <div class="title-card">
+        <h1 style="color:white;">🤖 AI Resume Screening</h1>
+        <p style="color:#e0e0e0;">&amp; Job Recommendation System</p>
     </div>
-    \"\"\", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         tab1, tab2 = st.tabs(["Login", "Sign Up"])
@@ -166,24 +166,24 @@ def show_login():
                     st.error("Username already exists!")
 
 def show_main():
-    st.sidebar.markdown(f\"\"\"
-    <div style=\"text-align:center; padding:15px;\">
-        <h3 style=\"color:#667eea;\">🤖 AI Resume</h3>
-        <p style=\"color:#a0aec0;\">Welcome, {st.session_state.username}!</p>
+    st.sidebar.markdown(f"""
+    <div style="text-align:center; padding:15px;">
+        <h3 style="color:#667eea;">🤖 AI Resume</h3>
+        <p style="color:#a0aec0;">Welcome, {st.session_state.username}!</p>
     </div>
-    \"\"\", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
     page = st.sidebar.selectbox("Navigation", ["Home", "Resume Screening", "Job Recommendation", "Dashboard", "AI Chatbot"])
     if st.sidebar.button("Logout"):
         st.session_state.logged_in = False
         st.rerun()
 
     if page == "Home":
-        st.markdown(\"\"\"
-        <div class=\"title-card\">
-            <h1 style=\"color:white;\">🤖 AI Resume Screening &amp; Job Recommendation</h1>
-            <p style=\"color:#e0e0e0;\">A smart AI-powered platform to screen resumes and find the perfect job match</p>
+        st.markdown("""
+        <div class="title-card">
+            <h1 style="color:white;">🤖 AI Resume Screening &amp; Job Recommendation</h1>
+            <p style="color:#e0e0e0;">A smart AI-powered platform to screen resumes and find the perfect job match</p>
         </div>
-        \"\"\", unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
         col1, col2, col3, col4 = st.columns(4)
         col1.metric("Total Resumes", len(df))
         col2.metric("Hired", len(df[df["Recruiter Decision"] == "Hire"]))
