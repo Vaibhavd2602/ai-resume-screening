@@ -1,0 +1,6 @@
+Streamlit → UI
+Scikit-learn → ML model
+PyPDF2 → PDF parsing
+Groq API → Chatbot
+Plotly → Graphs
+SQLite → Login system
