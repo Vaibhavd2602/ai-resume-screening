@@ -200,15 +200,25 @@ def show_main():
 
     elif page == "Resume Screening":
         st.markdown("## 📄 Resume Screening")
+
         col1, col2 = st.columns(2)
         with col1:
-            uploaded_file = st.file_uploader("Upload Resume (PDF)", type=["pdf"])
+            name = st.text_input("Full Name")
+            college = st.text_input("College/University Name")
             experience = st.slider("Years of Experience", 0, 20, 2)
             projects = st.number_input("Number of Projects", 0, 50, 3)
+            uploaded_file = st.file_uploader("Upload Resume (PDF)", type=["pdf"])
         with col2:
-            education = st.selectbox("Education Level", ["Bachelor", "Master", "PhD", "Diploma"])
+            edu_options = ["Bachelor", "Master", "PhD", "Diploma", "10th", "12th", "Other"]
+            education = st.selectbox("Education Level", edu_options)
+            if education == "Other":
+                education = st.text_input("Please specify your education")
             certifications = st.text_input("Certifications (e.g. AWS, Google)")
-            job_role = st.selectbox("Applying For", df["Job Role"].unique())
+            job_options = list(df["Job Role"].unique()) + ["Data Engineer", "Cloud Engineer", "Full Stack Developer", "Game Developer", "Blockchain Developer", "UI/UX Designer", "Product Manager", "Other"]
+            job_role = st.selectbox("Applying For", job_options)
+            if job_role == "Other":
+                job_role = st.text_input("Please specify the job role")
+
         skills_input = st.text_input("Your Skills (comma separated)", "Python, Machine Learning, SQL")
         if st.button("Screen My Resume"):
             if uploaded_file:
