@@ -205,51 +205,92 @@ def show_main():
         with col1:
             name = st.text_input("Full Name")
             college = st.text_input("College/University Name")
-            experience = st.slider("Years of Experience", 0, 20, 2)
-            projects = st.number_input("Number of Projects", 0, 50, 3)
+            experience = st.slider("Years of Experience", 0, 20, 0)
+            projects = st.number_input("Number of Projects", 0, 50, 0)
             uploaded_file = st.file_uploader("Upload Resume (PDF)", type=["pdf"])
         with col2:
-            edu_options = ["Bachelor", "Master", "PhD", "Diploma", "10th", "12th", "Other"]
+            edu_options = ["Select Education", "Bachelor", "Master", "PhD", "Diploma", "12th", "10th", "Other"]
             education = st.selectbox("Education Level", edu_options)
             if education == "Other":
                 education = st.text_input("Please specify your education")
             certifications = st.text_input("Certifications (e.g. AWS, Google)")
-            job_options = list(df["Job Role"].unique()) + ["Data Engineer", "Cloud Engineer", "Full Stack Developer", "Game Developer", "Blockchain Developer", "UI/UX Designer", "Product Manager", "Other"]
+            job_options = ["Select Job Role"] + list(df["Job Role"].unique()) + ["Data Engineer", "Cloud Engineer", "Full Stack Developer", "Game Developer", "Blockchain Developer", "UI/UX Designer", "Product Manager", "Other"]
             job_role = st.selectbox("Applying For", job_options)
             if job_role == "Other":
                 job_role = st.text_input("Please specify the job role")
 
-        skills_input = st.text_input("Your Skills (comma separated)", "Python, Machine Learning, SQL")
+        skills_input = st.text_input("Your Skills (comma separated)", "")
+
         if st.button("Screen My Resume"):
+            errors = []
+            if not name or name.strip() == "":
+                errors.append("Full Name is required!")
+            if education == "Select Education":
+                errors.append("Please select your Education Level!")
+            if job_role == "Select Job Role":
+                errors.append("Please select the Job Role!")
+            if not skills_input or skills_input.strip() == "":
+                errors.append("Please enter at least one skill!")
+
+            if errors:
+                for error in errors:
+                    st.error(f"❌ {error}")
+                st.stop()
+
             if uploaded_file:
                 pdf_text = extract_text_from_pdf(uploaded_file)
                 extracted_skills = extract_skills(pdf_text)
                 st.info(f"Skills extracted from PDF: {', '.join(extracted_skills) if extracted_skills else 'No common skills found'}")
-            ai_score = 75
+
+            good_skills = ["python", "machine learning", "deep learning", "tensorflow", "pytorch",
+                          "sql", "docker", "kubernetes", "aws", "nlp", "react", "nodejs",
+                          "java", "javascript", "cybersecurity", "ethical hacking", "mongodb",
+                          "data analysis", "tableau", "power bi", "excel", "c++", "kotlin",
+                          "android", "linux", "git", "computer vision", "flask", "django"]
+
+            user_skills = [s.strip().lower() for s in skills_input.split(",")]
+            matched = sum(1 for s in user_skills if s in good_skills)
+            ai_score = min(100, (matched * 12) + (experience * 4) + (projects * 3))
             ats_score = calculate_ats_score(experience, ai_score, projects, certifications)
-            edu_enc = 0
-            try:
-                edu_enc = le.transform([education])[0]
-            except:
+
+            if matched == 0:
+                result = "Reject"
+                reason = "No relevant technical skills found."
+            elif ai_score < 25:
+                result = "Reject"
+                reason = "Skills and experience are not sufficient for this role."
+            elif experience == 0 and projects == 0 and matched < 2:
+                result = "Reject"
+                reason = "No experience or projects found."
+            else:
                 edu_enc = 0
-            role_enc = 0
-            try:
-                role_enc = le.transform([job_role])[0]
-            except:
+                try:
+                    edu_enc = le.transform([education])[0]
+                except:
+                    edu_enc = 0
                 role_enc = 0
-            features = [[experience, ai_score, projects, 50000, edu_enc, role_enc]]
-            prediction = model.predict(features)[0]
-            result = "Hire" if prediction == 0 else "Reject"
+                try:
+                    role_enc = le.transform([job_role])[0]
+                except:
+                    role_enc = 0
+                features = [[experience, ai_score, projects, 50000, edu_enc, role_enc]]
+                prediction = model.predict(features)[0]
+                result = "Hire" if prediction == 0 else "Reject"
+                reason = ""
+
             st.markdown("---")
             st.markdown("### Screening Results")
             r1, r2, r3 = st.columns(3)
             r1.metric("ATS Score", f"{ats_score}/100")
             r2.metric("Screening Decision", result)
-            r3.metric("Skills Found", len(skills_input.split(",")))
+            r3.metric("Skills Matched", f"{matched}")
+
             if result == "Hire":
-                st.success("Congratulations! Your profile looks strong. You are likely to be hired!")
+                st.success(f"🎉 Congratulations {name}! Your profile looks strong. You are likely to be hired!")
             else:
-                st.error("Your profile needs improvement. Consider adding more skills and projects.")
+                st.error(f"❌ Sorry {name}! {reason}")
+                st.info("💡 Tip: Add more relevant skills, projects and experience to improve your chances.")
+
             fig = px.bar(x=["Experience", "AI Score", "Projects", "Certifications"],
                         y=[min(experience*6, 30), ai_score*0.4, min(projects*4, 20), 10 if certifications else 0],
                         title="ATS Score Breakdown", color_discrete_sequence=["#667eea"])
