@@ -209,12 +209,12 @@ def show_main():
             projects = st.number_input("Number of Projects", 0, 50, 0)
             uploaded_file = st.file_uploader("Upload Resume (PDF)", type=["pdf"])
         with col2:
-            edu_options = ["Select Education", "Bachelor", "Master", "PhD", "Diploma", "12th", "10th", "Other"]
+            edu_options = ["-- Select Education --", "Bachelor", "Master", "PhD", "Diploma", "12th", "10th", "Other"]
             education = st.selectbox("Education Level", edu_options)
             if education == "Other":
                 education = st.text_input("Please specify your education")
             certifications = st.text_input("Certifications (e.g. AWS, Google)")
-            job_options = ["Select Job Role"] + list(df["Job Role"].unique()) + ["Data Engineer", "Cloud Engineer", "Full Stack Developer", "Game Developer", "Blockchain Developer", "UI/UX Designer", "Product Manager", "Other"]
+            job_options = ["-- Select Job Role --"] + list(df["Job Role"].unique()) + ["Data Engineer", "Cloud Engineer", "Full Stack Developer", "Game Developer", "Blockchain Developer", "UI/UX Designer", "Product Manager", "Other"]
             job_role = st.selectbox("Applying For", job_options)
             if job_role == "Other":
                 job_role = st.text_input("Please specify the job role")
@@ -225,9 +225,9 @@ def show_main():
             errors = []
             if not name or name.strip() == "":
                 errors.append("Full Name is required!")
-            if education == "Select Education":
+            if education == "-- Select Education --":
                 errors.append("Please select your Education Level!")
-            if job_role == "Select Job Role":
+            if job_role == "-- Select Job Role --":
                 errors.append("Please select the Job Role!")
             if not skills_input or skills_input.strip() == "":
                 errors.append("Please enter at least one skill!")
@@ -259,7 +259,7 @@ def show_main():
             elif ai_score < 25:
                 result = "Reject"
                 reason = "Skills and experience are not sufficient for this role."
-            elif experience == 0 and projects == 0 and matched < 2:
+            elif matched < 3 and experience < 1:
                 result = "Reject"
                 reason = "No experience or projects found."
             else:
