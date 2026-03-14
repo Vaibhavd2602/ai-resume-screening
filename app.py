@@ -1,9 +1,8 @@
-
 import streamlit as st
 import pandas as pd
 import pickle
 import plotly.express as px
-from groq import Groq
+import google.generativeai as genai
 import PyPDF2
 import re
 import sqlite3
@@ -13,12 +12,107 @@ st.set_page_config(page_title="AI Resume Screening & Job Recommendation", page_i
 
 st.markdown("""
 <style>
-    .stApp {background: linear-gradient(135deg, #0e1117 0%, #1a1f2e 100%);}
-    div[data-testid="stMetric"] {background: linear-gradient(135deg, #1a1f2e, #2d3561); border: 1px solid #667eea; border-radius: 12px; padding: 15px;}
-    .stButton>button {background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; padding: 10px 25px; font-weight: bold; width: 100%;}
-    .title-card {background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 15px; text-align: center; margin-bottom: 30px;}
-    h1, h2, h3 {color: #ffffff;}
-    p {color: #a0aec0;}
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+* { font-family: 'Poppins', sans-serif; }
+
+@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes glow {
+    0% { box-shadow: 0 0 5px #667eea; }
+    50% { box-shadow: 0 0 20px #667eea, 0 0 40px #764ba2; }
+    100% { box-shadow: 0 0 5px #667eea; }
+}
+
+.stApp {
+    background: linear-gradient(-45deg, #0e1117, #1a1f2e, #16213e, #0f3460);
+    background-size: 400% 400%;
+    animation: gradientBG 10s ease infinite;
+}
+
+div[data-testid="stMetric"] {
+    background: linear-gradient(135deg, #1a1f2e, #2d3561);
+    border: 1px solid #667eea;
+    border-radius: 15px;
+    padding: 20px;
+    animation: fadeInUp 0.5s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+div[data-testid="stMetric"]:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+}
+
+.stButton>button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 30px;
+    font-weight: 600;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+.stButton>button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+}
+
+.title-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 40px;
+    border-radius: 20px;
+    text-align: center;
+    margin-bottom: 30px;
+    animation: fadeInUp 0.8s ease, glow 3s ease-in-out infinite;
+}
+
+.stTextInput>div>div>input {
+    background: rgba(255,255,255,0.05) !important;
+    border: 1px solid rgba(102, 126, 234, 0.4) !important;
+    border-radius: 10px !important;
+    color: white !important;
+    transition: all 0.3s ease;
+}
+
+.stTextInput>div>div>input:focus {
+    border-color: #667eea !important;
+    box-shadow: 0 0 15px rgba(102, 126, 234, 0.3) !important;
+}
+
+.stSelectbox>div>div {
+    background: rgba(255,255,255,0.05) !important;
+    border: 1px solid rgba(102, 126, 234, 0.4) !important;
+    border-radius: 10px !important;
+}
+
+h1, h2, h3 {
+    color: #ffffff;
+    animation: fadeInUp 0.5s ease;
+}
+
+p { color: #a0aec0; }
+
+div[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #0e1117 0%, #1a1f2e 100%);
+    border-right: 1px solid rgba(102, 126, 234, 0.2);
+}
+
+.stProgress > div > div {
+    background: linear-gradient(135deg, #667eea, #764ba2) !important;
+    border-radius: 10px;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -64,7 +158,7 @@ with open("model.pkl", "rb") as f:
 with open("encoder.pkl", "rb") as f:
     le = pickle.load(f)
 df = pd.read_excel("AI_Resume_Screening.csv.xlsx")
-client = Groq(api_key=st.secrets["groq"]["api_key"])
+genai.configure(api_key=st.secrets["gemini"]["api_key"])
 
 def extract_text_from_pdf(uploaded_file):
     reader = PyPDF2.PdfReader(uploaded_file)
@@ -124,14 +218,10 @@ def recommend_jobs(skills):
     return recommendations[:3]
 
 def chat_with_ai(user_message):
-    response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[
-            {"role": "system", "content": "You are an expert HR assistant and career coach. Help candidates with resume tips, interview preparation and career guidance. Keep answers short and helpful."},
-            {"role": "user", "content": user_message}
-        ]
-    )
-    return response.choices[0].message.content
+    model = genai.GenerativeModel("gemini-1.5-flash")
+    prompt = f"You are an expert HR assistant and career coach. Help candidates with resume tips, interview preparation and career guidance. Keep answers short and helpful.\n\nUser: {user_message}"
+    response = model.generate_content(prompt)
+    return response.text
 
 def show_login():
     st.markdown("""

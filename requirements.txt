@@ -5,3 +5,5 @@ plotly
 groq
 PyPDF2
 openpyxl
+
+google-generativeai
