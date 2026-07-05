@@ -219,6 +219,78 @@ def recommend_jobs(skills):
 
 def chat_with_ai(user_message):
     try:
+        from groq import Groq
+        client = Groq(api_key=st.secrets["groq"]["api_key"])
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": "You are an expert HR assistant and career coach. Help candidates with resume tips, interview preparation and career guidance. Keep answers short and helpful."},
+                {"role": "user", "content": user_message}
+            ]
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        return "Sorry, AI is temporarily unavailable. Please try again in a moment."
+
+def extract_text_from_pdf(uploaded_file):
+    reader = PyPDF2.PdfReader(uploaded_file)
+    text = ""
+    for page in reader.pages:
+        text += page.extract_text()
+    return text
+
+def extract_skills(text):
+    common_skills = ["python", "java", "javascript", "react", "nodejs", "machine learning",
+        "deep learning", "sql", "html", "css", "tensorflow", "pytorch", "docker",
+        "kubernetes", "aws", "nlp", "computer vision", "tableau", "power bi", "excel",
+        "kotlin", "android", "linux", "git", "mongodb", "ethical hacking", "cybersecurity", "networking", "c++"]
+    text_lower = text.lower()
+    return [skill for skill in common_skills if skill in text_lower]
+
+def calculate_ats_score(experience, ai_score, projects, certifications):
+    score = 0
+    if experience >= 5:
+        score += 30
+    elif experience >= 2:
+        score += 20
+    else:
+        score += 10
+    score += (ai_score * 0.4)
+    if projects >= 5:
+        score += 20
+    elif projects >= 2:
+        score += 10
+    else:
+        score += 5
+    if certifications and certifications.lower() not in ["none", ""]:
+        score += 10
+    return round(min(score, 100), 2)
+
+def recommend_jobs(skills):
+    job_data = {
+        "Data Scientist": ["python", "machine learning", "deep learning", "tensorflow"],
+        "Web Developer": ["html", "css", "javascript", "react"],
+        "Android Developer": ["java", "kotlin", "android"],
+        "ML Engineer": ["python", "machine learning", "pytorch", "nlp"],
+        "Data Analyst": ["python", "sql", "excel", "tableau", "power bi"],
+        "DevOps Engineer": ["docker", "kubernetes", "aws", "linux"],
+        "Backend Developer": ["python", "java", "nodejs", "sql"],
+        "AI Engineer": ["python", "deep learning", "nlp", "computer vision"],
+        "Cybersecurity Analyst": ["ethical hacking", "cybersecurity", "networking", "linux"],
+        "Database Administrator": ["sql", "mongodb", "python"]
+    }
+    skills_lower = skills.lower()
+    recommendations = []
+    for job, required_skills in job_data.items():
+        match = sum(1 for skill in required_skills if skill in skills_lower)
+        if match > 0:
+            match_percent = round((match / len(required_skills)) * 100)
+            recommendations.append((job, match_percent))
+    recommendations.sort(key=lambda x: x[1], reverse=True)
+    return recommendations[:3]
+
+def chat_with_ai(user_message):
+    try:
         model = genai.GenerativeModel("gemini-1.5-flash")
         prompt = f"You are an expert HR assistant and career coach. Help candidates with resume tips, interview preparation and career guidance. Keep answers short and helpful.\n\nUser: {user_message}"
         response = model.generate_content(prompt)
