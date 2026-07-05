@@ -218,10 +218,18 @@ def recommend_jobs(skills):
     return recommendations[:3]
 
 def chat_with_ai(user_message):
-    model = genai.GenerativeModel("gemini-2.0-flash")
-    prompt = f"You are an expert HR assistant and career coach. Help candidates with resume tips, interview preparation and career guidance. Keep answers short and helpful.\n\nUser: {user_message}"
-    response = model.generate_content(prompt)
-    return response.text
+    try:
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        prompt = f"You are an expert HR assistant and career coach. Help candidates with resume tips, interview preparation and career guidance. Keep answers short and helpful.\n\nUser: {user_message}"
+        response = model.generate_content(prompt)
+        return response.text
+    except Exception as e:
+        try:
+            model = genai.GenerativeModel("gemini-1.0-pro")
+            response = model.generate_content(prompt)
+            return response.text
+        except:
+            return "Sorry, AI is temporarily unavailable due to rate limits. Please try again after a minute."
 
 def show_login():
     st.markdown("""
