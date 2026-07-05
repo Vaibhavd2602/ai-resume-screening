@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import pickle
 import plotly.express as px
-import google.generativeai as genai
+from groq import Groq
 import PyPDF2
 import re
 import sqlite3
@@ -158,7 +158,7 @@ with open("model.pkl", "rb") as f:
 with open("encoder.pkl", "rb") as f:
     le = pickle.load(f)
 df = pd.read_excel("AI_Resume_Screening.csv.xlsx")
-genai.configure(api_key=st.secrets["gemini"]["api_key"])
+client = Groq(api_key=st.secrets["groq"]["api_key"])
 
 def extract_text_from_pdf(uploaded_file):
     reader = PyPDF2.PdfReader(uploaded_file)
